@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>Timeline Achievements - RATCTF</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body {
+      width:100%; height:100%;
+      background: radial-gradient(ellipse at bottom, #1B2735 0%, #090A0F 100%);
+      overflow:hidden;
+      font-family: Arial, sans-serif;
+      color: #fff;
+    }
+
+    .sidebar {
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+        position: fixed;
+        left: -220px;
+        top: 0;
+        width: 220px;
+        height: 100%;
+        padding-top: 60px;
+        transition: left 0.3s ease;
+        z-index: 10;
+    }
+
+    .sidebar.open {
+        left: 0px;
+    }
+
+    .sidebar a {
+        display: flex;
+        align-items: center;
+        padding: 15px 20px;
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+        font-weight: 500;
+        transition: background 0.2s ease, color 0.2s ease;
+        border-left: 3px solid transparent;
+    }
+
+    .sidebar a:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #00ffff;
+        border-left-color: #00ffff;
+    }
+
+    .sidebar a i {
+        margin-right: 12px;
+        width: 20px;
+        text-align: center;
+    }
+
+    .sidebar a.writeups {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .sidebar a.writeups::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, rgba(255,255,255,0.05), rgba(255,255,255,0.1));
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .sidebar a.writeups:hover::before {
+        opacity: 1;
+    }
+
+    .sidebar a.writeups i {
+        color: #ffffff;
+        text-shadow: 0 0 8px rgba(255,255,255,0.5);
+    }
+
+    .sidebar a.writeups:hover i {
+        color: #ffffff;
+        text-shadow: 0 0 12px rgba(255,255,255,0.8);
+        transform: scale(1.1);
+        transition: all 0.2s ease;
+    }
+
+    .menu-toggle {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        color: white;
+        font-size: 24px;
+        cursor: pointer;
+        z-index: 11;
+        transition: transform 0.2s ease;
+    }
+
+    .menu-toggle:hover {
+        transform: scale(1.1);
+        color: #00ffff;
+    }
+
+    .stars, .stars2, .stars3 {
+      position:absolute; top:0; left:0;
+      width:100%; height:100%;
+      background: transparent;
+      z-index:0;
+    }
+
+    .stars {
+      width: 1px;
+      height: 1px;
+      background: transparent;
+      box-shadow:
+          849px 82px #FFF,
+          1342px 1885px #FFF,
+          1818px 574px #FFF,
+          551px 123px #FFF,
+          906px 1796px #FFF,
+          300px 500px #FFF,
+          700px 300px #FFF,
+          1100px 700px #FFF,
+          200px 1200px #FFF,
+          1500px 200px #FFF;
+      animation: animStar 50s linear infinite;
+    }
+
+    .stars2 {
+      width: 2px;
+      height: 2px;
+      background: transparent;
+      box-shadow:
+          728px 424px #FFF,
+          70px 1832px #FFF,
+          110px 13px #FFF,
+          400px 800px #FFF,
+          1200px 400px #FFF,
+          600px 1400px #FFF;
+      animation: animStar 100s linear infinite;
+    }
+
+    .stars3 {
+      width: 3px;
+      height: 3px;
+      background: transparent;
+      box-shadow:
+          500px 300px #FFF,
+          1200px 800px #FFF,
+          300px 1500px #FFF,
+          1700px 400px #FFF,
+          800px 100px #FFF,
+          100px 900px #FFF;
+      animation: animStar 150s linear infinite, twinkle 2s ease-in-out infinite;
+    }
+
+    @keyframes animStar {
+        from {
+            transform: translateY(0px);
+        }
+        to {
+            transform: translateY(-2000px);
+        }
+    }
+
+    @keyframes twinkle {
+        0% { opacity: 1; }
+        50% { opacity: 0.3; }
+        100% { opacity: 1; }
+    }
+
+    .timeline {
+      position: absolute;
+      top: 5%;
+      bottom: 5%;
+      left: 50%;
+      width: 2px;
+      background: #fff;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      z-index:1;
+    }
+
+    .point {
+      position: relative;
+      width: 16px; height:16px;
+      background: #fff;
+      border-radius:50%;
+      z-index:2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .point::before {
+      content: '';
+      position: absolute;
+      width: 32px; height:32px;
+      border:2px solid #fff;
+      border-radius:50%;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%   { transform: scale(1); opacity:1; }
+      100% { transform: scale(1.5); opacity:0; }
+    }
+    .point span {
+      position: absolute;
+      top: -24px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .card {
+      position:absolute;
+      top:50%; transform: translateY(-50%);
+      width: 260px;
+      background: rgba(0,0,0,0.8);
+      padding:10px;
+      border-radius:8px;
+      box-shadow: 0 0 10px rgba(255,255,255,0.3);
+      font-size:14px;
+      z-index:1;
+    }
+
+    .timeline .point:nth-child(odd) .card {
+      right: calc(100% + 20px);
+      text-align: right;
+    }
+    .timeline .point:nth-child(even) .card {
+      left: calc(100% + 20px);
+      text-align: left;
+    }
+
+    .card h3 {
+      margin:0 0 5px;
+      font-size:16px;
+      color: #FFD700;
+      display:flex;
+      align-items:center;
+    }
+    .card h3::before {
+      content: '🏆';
+      margin-right: 5px;
+    }
+    .card p { margin:0; line-height:1.4; }
+
+    .icon-container {
+        display: flex;
+        justify-content: flex-start;
+        position: fixed;
+        bottom: 20px;
+        left: 20px;
+        gap: 10px;
+        z-index: 11;
+    }
+
+    .icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .icon:hover {
+        transform: scale(1.1);
+    }
+
+    #ctftime-icon {
+        background-color: red;
+    }
+
+    #twitter-icon {
+        background-color: green;
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            width: 250px;
+            left: -250px;
+        }
+
+        .card {
+            width: 200px;
+            font-size: 12px;
+        }
+
+        .card h3 {
+            font-size: 14px;
+        }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="stars"></div>
+  <div class="stars2"></div>
+  <div class="stars3"></div>
+
+  <div class="menu-toggle" id="menu-toggle">
+      <i class="fas fa-bars"></i>
+  </div>
+
+  <div class="sidebar" id="sidebar">
+      <a href="home.html">
+          <i class="fas fa-home"></i> Home
+      </a>
+      <a href="#" onclick="location.reload()">
+          <i class="fas fa-trophy"></i> Achievements
+      </a>
+      <a href="https://github.com/Thr4t-Hunt1n9/CTF-Write-Up" target="_blank" class="writeups">
+          <i class="fas fa-pen-nib"></i> Write-Ups
+      </a>
+  </div>
+
+  <div class="icon-container">
+      <a href="https://ctftime.org/team/372652" target="_blank">
+          <img id="ctftime-icon" class="icon" src="https://ctftime.org/static/images/ct/logo.svg" alt="CTFtime Icon">
+      </a>
+  </div>
+
+  <div class="timeline">
+    <div class="point">
+      <span>2025</span>
+      <div class="card">
+        <h3>117th Place – SwampCTF 2025</h3>
+        <p>Achieved 117nd place in the SwampCTF competition.</p>
+      </div>
+    </div>
+
+    <div class="point">
+      <span>2025</span>
+      <div class="card">
+        <h3>111th Place – DawgCTF 2025</h3>
+        <p>Achieved 111nd place in the DawgCTF competition.</p>
+      </div>
+    </div>
+
+    <div class="point">
+      <span>2025</span>
+      <div class="card">
+        <h3>75th Place – CTF@CIT 2025</h3>
+        <p>Achieved 111nd place in the CTF@CIT competition.</p>
+      </div>
+    </div>
+
+    <div class="point">
+      <span>2025</span>
+      <div class="card">
+        <h3>140th Place – DownUnderCTF 2025</h3>
+        <p>Achieved 111nd place in the DownUnderCTF competition.</p>
+      </div>
+    </div>
+
+    <div class="point">
+      <span>2025</span>
+      <div class="card">
+        <h3>56th Place – N0PSctf 2025</h3>
+        <p>Achieved 56nd place in the N0PSctf competition.</p>
+      </div>
+    </div>
+
+    <div class="point">
+      <span>2025</span>
+      <div class="card">
+        <h3>92th Place – TJCTF 2025</h3>
+        <p>Achieved 92nd place in the TJCTF competition.</p>
+      </div>
+    </div>
+
+    <div class="point">
+      <span>2025</span>
+      <div class="card">
+        <h3>20th Place – No Hack No CTF 2025</h3>
+        <p>Achieved 20nd place in the NHNC competition.</p>
+      </div>
+    </div>
+
+    <div class="point">
+      <span>2025</span>
+      <div class="card">
+        <h3>33th Place – StackSmash CTF 2025</h3>
+        <p>Achieved 33nd place in the StackSmash competition.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <button id="theme-toggle" style="
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    background-color: #00bcd4;
+    color: white;
+    border: none;
+    cursor: pointer;
+    z-index: 1000;
+    font-weight: bold;
+  ">
+    Light Mode
+  </button>
+
+
+  <script src="js/script.js"></script>
+</body>
+</html>
